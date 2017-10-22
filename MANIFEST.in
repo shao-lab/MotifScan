@@ -1,0 +1,10 @@
+# Docs
+include LICENSE
+include CHANGELOG.md
+include README.md
+graft docs
+
+# Data
+recursive-include data/example *.txt *.bed
+recursive-include data/gene *.txt
+recursive-include data/motif *.txt

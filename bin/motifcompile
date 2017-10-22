@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright 2014-2017, Hongduo Sun, Jiawei Wang, Zhen Shao
+#
+# This file is part of MotifScan.
+#
+# MotifScan is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MotifScan is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with MotifScan.  If not, see <http://www.gnu.org/licenses/>.
+
+"""MotifCompile command line script."""
+
+import os
+import sys
+import logging
+import argparse
+from motifscan import __version__
+import motifscan.io.motifio as motifio
+import motifscan.io.genomeio as genomeio
+import motifscan.lib.motif as motif
+
+
+def argparser_config():
+    """Configure the arguments parser.
+    """
+    description = """%(prog)s -- Compile the motif matrix and perform background simulation."""
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-v', '--version', action='version', version="%(prog)s {}".format(__version__))
+    group_input = parser.add_argument_group("Input arguments")
+    group_input.add_argument('-M', dest='motif_file', type=str, required=True,
+                             help="Raw motif PFM (Position Frequency Matrix) file.")
+    group_input.add_argument('-g', dest='genome_dir', type=str, required=True,
+                             help="Required path of pre-compiled genome directory, which contains genome sequence and "
+                                  "other relevant information. You can run 'genomecompile' to generate the directory.")
+    group_output = parser.add_argument_group("Output arguments")
+    group_output.add_argument('-o', dest='output_prefix', type=str, required=True,
+                              help="Required prefix of output files.")
+    return parser
+
+
+def main():
+    """Main function of motifcompile procedure.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s @%(asctime)s: %(message)s", stream=sys.stderr,
+                        datefmt="%m/%d/%Y %H:%M", filemode="w")
+    parser = argparser_config()
+    args = parser.parse_args()
+
+    genome_dir = args.genome_dir
+    motif_pfm_file = args.motif_file
+    output_prefix = args.output_prefix
+    if output_prefix is None:
+        output_prefix = "{}".format(os.path.splitext(os.path.basename(motif_pfm_file))[0])
+
+    logging.info("Loading genome...")
+    bg_freq, chr_size = genomeio.load_genome(genome_dir=genome_dir)
+
+    logging.info("Loading motif PFM (Position Frequency Matrix)...")
+    motifs = motifio.load_motif_pfm(motif_pfm_file=motif_pfm_file)
+    logging.info("{} motifs are recognized!".format(len(motifs)))
+
+    logging.info("Computing maximal motif score...")
+    motifs = motif.compute_max_score(motifs=motifs, bg_freq=bg_freq)
+
+    logging.info("Random sampling from whole genome...")
+    sampling_times = 1000000
+    motifs = motif.simulation(motifs=motifs, sampling_times=sampling_times, genome_dir=genome_dir, bg_freq=bg_freq,
+                              chr_size=chr_size)
+    logging.info("Writing the compiled motif table...")
+    motifio.write_motif_table(motifs=motifs, sampling_times=sampling_times, output_prefix=output_prefix)
+    logging.info("MotifCompile completed...")
+    return
+
+
+if __name__ == '__main__':
+    main()

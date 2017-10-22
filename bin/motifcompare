@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright 2014-2017, Hongduo Sun, Jiawei Wang, Zhen Shao
+#
+# This file is part of MotifScan.
+#
+# MotifScan is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MotifScan is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with MotifScan.  If not, see <http://www.gnu.org/licenses/>.
+
+""" MotifCompare command line script."""
+
+import argparse
+import logging
+import os
+import sys
+
+import motifscan.workflow as motifscan_general
+from motifscan import __version__
+
+
+def argparser_config():
+    """Configure the arguments parser.
+    """
+    description = """%(prog)s -- Motif enrichment analysis Between Two Samples."""
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("-v", "--version", action='version', version="%(prog)s {}".format(__version__))
+    group_input = parser.add_argument_group("Input arguments")
+    group_input.add_argument("-t", "--result_a", dest="result_a", type=str, required=True,
+                             help="MotifScan result directory for sample A.")
+    group_input.add_argument("-c", "--result_b", dest="result_b", type=str, required=True,
+                             help="MotifScan result directory for sample B.")
+
+    group_output = parser.add_argument_group("Output arguments")
+    group_output.add_argument('-o', dest='output_file', type=str, help="Optional output file prefix.")
+    return parser
+
+
+def main():
+    """Main function of genomecompile procedure.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s @%(asctime)s: %(message)s", stream=sys.stderr,
+                        datefmt="%m/%d/%Y %H:%M", filemode="w")
+    parser = argparser_config()
+    args = parser.parse_args()
+    result_a = args.result_a
+    result_b = args.result_b
+    if args.output_file:
+        output_file = args.output_file
+    else:
+        output_file = "{0}_vs_{1}.csv".format(os.path.splitext(os.path.basename(result_a))[0],
+                                              os.path.splitext(os.path.basename(result_b))[0])
+    motifscan_general.motifcompare_general(result_a, result_b, output_file)
+    return
+
+
+if __name__ == '__main__':
+    main()

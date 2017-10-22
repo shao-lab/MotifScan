@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+# Copyright 2014-2017, Hongduo Sun, Jiawei Wang, Zhen Shao
+#
+# This file is part of MotifScan.
+#
+# MotifScan is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# MotifScan is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with MotifScan.  If not, see <http://www.gnu.org/licenses/>.
+
+"""GenomeCompile command line script."""
+
+import os
+import sys
+import shutil
+import logging
+import argparse
+from motifscan import __version__
+import motifscan.io.genomeio as genomeio
+import motifscan.lib.genome as genome
+
+
+def argparser_config():
+    """Configure the arguments parser.
+    """
+    description = """%(prog)s -- Compile the genome sequences."""
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-v', '--version', action='version', version="%(prog)s {}".format(__version__))
+    group_input = parser.add_argument_group("Input arguments")
+    group_input.add_argument('-G', dest='genome_file', type=str, required=True,
+                             help="Required genome sequence in fasta format.")
+    group_output = parser.add_argument_group("Output arguments")
+    group_output.add_argument('-o', dest='output_dir', type=str, required=True,
+                              help="Required directory path to write the output files.")
+    return parser
+
+
+def main():
+    """Main function of genomecompile procedure.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(levelname)-8s @%(asctime)s: %(message)s", stream=sys.stderr,
+                        datefmt="%m/%d/%Y %H:%M", filemode="w")
+    parser = argparser_config()
+    args = parser.parse_args()
+    genome_file = args.genome_file
+    output_dir = args.output_dir
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    try:
+        logging.info("Parsing genome sequence: {}...".format(genome_file))
+        logging.info("Computing genome background frequency of nucleotides...")
+        bg_freq = genome.compute_bg_freq(genome_file=genome_file)
+        logging.info("Computing chromosome size...")
+        chr_size = genome.compute_genome_size(genome_file=genome_file)
+        genomeio.dump_genome(bg_freq=bg_freq, chr_size=chr_size, output_dir=output_dir)
+        logging.info("Splitting sequences by chromosome...")
+        genomeio.split_genome(genome_file=genome_file, output_dir=output_dir)
+    except KeyboardInterrupt:
+        logging.error("Interrupted by user, rolling back...")
+        shutil.rmtree(output_dir)
+        raise
+    except:
+        logging.error("Failed to parser genome, rolling back...")
+        shutil.rmtree(output_dir)
+        raise
+    logging.info("GenomeCompile completed...")
+    return
+
+
+if __name__ == '__main__':
+    main()
