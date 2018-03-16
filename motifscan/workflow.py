@@ -1,20 +1,3 @@
-# Copyright 2014-2017, Hongduo Sun, Jiawei Wang, Zhen Shao
-#
-# This file is part of MotifScan.
-#
-# MotifScan is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# MotifScan is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with MotifScan.  If not, see <http://www.gnu.org/licenses/>.
-
 """Module script for MotifScan backbone."""
 
 import os
@@ -84,6 +67,7 @@ def motifscan_run(genome_dir, gene_file, motif_file, motif_filter_file, peak_fil
     logging.info("### Scanning motifs on input regions ###")
     logging.info("Extracting sequences...")
     genome_dir_iter = [genome_dir] * len(peaks)
+    print peaks
     peaks['seq'] = map(extract_sequence, genome_dir_iter, peaks['chr'], peaks['seq_start'], peaks['seq_end'])
     peaks['seq_matrix'] = map(construct_sequence_matrix, peaks['seq'])
 
@@ -136,7 +120,7 @@ def motifscan_run(genome_dir, gene_file, motif_file, motif_filter_file, peak_fil
     if enrichment_flag:
         logging.info("Saving the enrichment analysis results...")
         output_enrichment_result(output_file=output_stream.enrichment_file, data=enrich_result)
-    if False:
+    if True:
         logging.info("Plotting the target site distribution of motifs...")
         if (not enrichment_flag or 'value' not in peaks.columns) and peak_length != 0:
             plot.target_site_distribution(peak_df=peak_result, motif_df=motifs, plot_dir=output_stream.plot_dir,

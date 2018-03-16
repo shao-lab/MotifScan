@@ -1,3 +1,0 @@
-# Motifscan
-
-## TODO
