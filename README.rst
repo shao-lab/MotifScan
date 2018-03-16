@@ -80,15 +80,15 @@ IF you have some motifs that have not be included in our pre-complied motif coll
 Motif raw matrix file should follow the format as below:
 
 motif id and motif name are followed by a positive weighted matrix, and columns are seperated by tabs.
+::
+    >MA0599.1 KLF5
+    1429 0 0 3477 0 5051 0 0 0 3915
 
->MA0599.1 KLF5
-1429 0 0 3477 0 5051 0 0 0 3915
+    2023 11900 12008 9569 13611 0 13611 13611 13135 5595
 
-2023 11900 12008 9569 13611 0 13611 13611 13135 5595
+    7572 0 0 0 0 5182 0 0 0 0
 
-7572 0 0 0 0 5182 0 0 0 0
-
-2587 1711 1603 565 0 3378 0 0 476 4101
+    2587 1711 1603 565 0 3378 0 0 476 4101
 
 Scan Motifs
 ^^^^^^^^^^^
