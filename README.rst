@@ -37,8 +37,8 @@ The latest version release of MotifScan is available at
 
     $ pip install motifscan
 
-MAnorm uses `setuptools <https://setuptools.readthedocs.io/en/latest/>`__ for installation from source code.
-The source code of MAnorm is hosted on GitHub: https://github.com/shao-lab/MotifScan
+MotifScan uses `setuptools <https://setuptools.readthedocs.io/en/latest/>`__ for installation from source code.
+The source code of MotifScan is hosted on GitHub: https://github.com/shao-lab/MotifScan
 
 You can clone the repo and execute the following command under source directory:
 
