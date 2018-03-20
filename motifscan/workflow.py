@@ -67,7 +67,6 @@ def motifscan_run(genome_dir, gene_file, motif_file, motif_filter_file, peak_fil
     logging.info("### Scanning motifs on input regions ###")
     logging.info("Extracting sequences...")
     genome_dir_iter = [genome_dir] * len(peaks)
-    print peaks
     peaks['seq'] = map(extract_sequence, genome_dir_iter, peaks['chr'], peaks['seq_start'], peaks['seq_end'])
     peaks['seq_matrix'] = map(construct_sequence_matrix, peaks['seq'])
 
