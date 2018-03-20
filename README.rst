@@ -25,7 +25,7 @@ de novo motif discovery tool.
 Documentation
 -------------
 
-To see the full documentation of MAnorm, please refer to: http://bioinfo.sibs.ac.cn/shaolab/motifscan/index.php
+To see the full documentation of MotifScan, please refer to: http://bioinfo.sibs.ac.cn/shaolab/motifscan/index.php
 
 Installation
 ------------
