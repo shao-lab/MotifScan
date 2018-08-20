@@ -91,8 +91,8 @@ def target_site_distribution(peak_df, motif_df, plot_dir, region_radius):
             tick.label.set_fontweight('bold')
         for tick in ax.yaxis.get_major_ticks():
             tick.label.set_fontweight('bold')
-        ax.tick_params(axis='x', which='both', top='off')
-        ax.tick_params(axis='y', which='both', right='off')
+        ax.tick_params(axis='x', which='both', top=False)
+        ax.tick_params(axis='y', which='both', right=False)
         for axis in ['top', 'bottom', 'left', 'right']:
             ax.spines[axis].set_linewidth(2)
         plt.savefig('%s/%s_target_site.png' % (plot_dir, re.sub(r'[:\-.]{1,2}', '_', motif_name)), dpi=600)
@@ -180,8 +180,8 @@ def tarnum_and_tarsite_distribution(peak_table, rand_table, motif_table, plot_ou
         ax1.set_ylim(ymin=0, ymax=1.3 * max(tarnum_fc_smooth))
         for axis in ['top', 'bottom', 'left', 'right']:
             ax1.spines[axis].set_linewidth(2)
-        ax1.tick_params(axis='x', which='both', top='off')
-        ax1.tick_params(axis='y', which='both', right='off')
+        ax1.tick_params(axis='x', which='both', top=False)
+        ax1.tick_params(axis='y', which='both', right=False)
         ax1.set_ylabel('Fold Change', weight='bold')
         ax1.set_xlabel('Peak Rank (Sorted by Value in Descending Order)', weight='bold')
         for tick in ax1.xaxis.get_major_ticks():
@@ -200,8 +200,8 @@ def tarnum_and_tarsite_distribution(peak_table, rand_table, motif_table, plot_ou
             tick.label.set_fontweight('bold')
         for tick in ax2.yaxis.get_major_ticks():
             tick.label.set_fontweight('bold')
-        ax2.tick_params(axis='x', which='both', top='off')
-        ax2.tick_params(axis='y', which='both', right='off')
+        ax2.tick_params(axis='x', which='both', top=False)
+        ax2.tick_params(axis='y', which='both', right=False)
         for axis in ['top', 'bottom', 'left', 'right']:
             ax2.spines[axis].set_linewidth(2)
         fig.savefig('%s/%s_%s_tarsite_fc_dist.png' % (plot_out_dir, cnt, re.sub(r'[:\-.]{1,2}', '_', motif_name)),
