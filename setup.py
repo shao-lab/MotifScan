@@ -1,10 +1,10 @@
 import os
 from setuptools import setup, Extension, find_packages
+from motifscan import __version__
 
 os.environ['CC'] = 'g++'
 os.environ['LDSHARED'] = 'g++'
 
-VERSION = "1.1"
 INSTALL_REQUIRES = ['numpy',
                     'scipy',
                     'pandas>=0.17.0',
@@ -24,11 +24,11 @@ CLASSIFIERS = ['Development Status :: 3 - Alpha',
                'Topic :: Scientific/Engineering :: Bio-Informatics',
                ]
 
-with open('README.md', 'r') as fin:
+with open('README.rst', 'r') as fin:
     long_description = fin.read()
 
 setup(name="motifscan",
-      version=VERSION,
+      version=__version__,
       author="Jiawei Wang",
       author_email="jerryeah@gmail.com",
       maintainer="Hayden Sun",
