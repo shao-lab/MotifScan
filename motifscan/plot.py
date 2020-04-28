@@ -1,210 +1,151 @@
-import re
-import sys
-import math
+import logging
+import os
+
+import matplotlib as mpl
 import numpy as np
-import pandas as pd
-import matplotlib
 
-matplotlib.use('Agg')
+mpl.use('Agg')
+
 import matplotlib.pyplot as plt
-from motifscan.utils import extract_motif_name_from_peak_result_table
+
+from motifscan.io.utils import replace_special_char
+
+logger = logging.getLogger(__name__)
 
 
-def _get_highest_digit(n):
-    if n / 100000000:
-        n /= 100000000
-    if n / 10000:
-        n /= 10000
-    if n / 100:
-        n /= 100
-    if n / 10:
-        n /= 10
-    return n
+def have_same_region_length(regions):
+    length = None
+    for region in regions:
+        if not length:
+            length = region.end - region.start
+        else:
+            if region.end - region.start != length:
+                return False
+    return True
 
 
-def smooth(x, window_len=5, window='hanning'):
-    if isinstance(x, list):
-        x = np.array(x)
-    if x.ndim != 1:
-        raise ValueError, "smooth only accepts 1 dimension arrays."
-    if x.size < window_len:
-        raise ValueError, "Input vector needs to be bigger than window size."
-    if window_len < 3:
+def have_value_attr(regions):
+    for region in regions:
+        if region.score is None:
+            return False
+    return True
+
+
+def smooth(x, window_len=11):
+    if len(x) <= window_len:
         return x
-    if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett',  blackman'"
-
-    s = np.r_[2 * x[0] - x[window_len:1:-1], x, 2 * x[-1] - x[-1:-window_len:-1]]
-    if window == 'flat':  # moving average
-        w = np.ones(window_len, 'd')
-    else:
-        w = eval('np.' + window + '(window_len)')
-
+    s = np.r_[x[window_len - 1:0:-1], x, x[-2:-window_len - 1:-1]]
+    w = np.hanning(window_len)
     y = np.convolve(w / w.sum(), s, mode='same')
-    # return the smoothed signal,  chopping off the ends so that it has the previous size.
     return y[window_len - 1:-window_len + 1]
 
 
-def target_site_distribution(peak_df, motif_df, plot_dir, region_radius):
-    # win_size = region_radius * 2
+def plot_motif_sites_dist(output_dir, regions, pwms, motif_sites,
+                          window_size):
+    if window_size <= 0:
+        if len(regions) == 0:
+            logger.error("No regions found for plotting")
+            return
+        if not have_same_region_length(regions):
+            logger.error("Unable to plot when the scanning length is "
+                         "different across regions")
+            return
 
-    win_size = region_radius * 2
-    half_win_size = region_radius
-    bin_size = 10
+    output_dir = os.path.join(output_dir, 'plots')
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
 
-    bin_center = np.arange(-half_win_size, win_size - half_win_size + bin_size, bin_size)
-    bin_edge = bin_center - round(bin_size / 2)
-    bin_edge = np.append(bin_edge, bin_center[-1] + round(bin_size / 2))
-    bin_edge = map(float, bin_edge)
-    motif_num = len(motif_df)
-    cnt = 0
-    for motif_idx, motif_record in motif_df.iterrows():
-        cnt += 1
-        motif_len = np.shape(motif_record['matrix'])[1]
-        motif_name = motif_record['name']
-        motif_tarsite = []
-        for tar_idx, i in enumerate(peak_df['%s.tarsite' % motif_name]):
-            if len(i) > 0:
-                for j in i:
-                    motif_tarsite.append(j + motif_len / 2 - region_radius)
+    if window_size <= 0:
+        window_size = regions[0].end - regions[0].start
+    extend = window_size // 2
 
-        motif_tarsite_freq = np.histogram(motif_tarsite, bin_edge)
-        motif_marker = motif_tarsite_freq[0]
-        motif_marker = motif_marker / float(sum(motif_marker))
-        n_motif_marker = len(motif_marker)
-        # circular smooth
-        motif_marker_long = np.concatenate([motif_marker, motif_marker, motif_marker])
-        motif_marker_long = smooth(motif_marker_long, 20)
-        motif_marker = motif_marker_long[n_motif_marker:(2 * n_motif_marker)]
-
-        plt.cla()
-        # plt.plot(bin_edge[:-1], motif_marker, lw = 2, color='#4169E1', label=motif_name)
-        plt.bar(bin_edge[:-1], motif_marker, width=bin_size - float(bin_size) / 10 + float(bin_size) / 20,
-                color='#4169E1', linewidth=0, label=motif_name)
-        plt.legend()
-        ax = plt.gca()
-        ax.set_xlabel('Distance to Peak Summit', weight='bold')
-        ax.set_ylabel('Fraction', weight='bold')
-        ax.set_xlim([min(bin_edge), max(bin_edge)])
-        ax.set_ylim([0, 1.5 * max(motif_marker)])
-        for tick in ax.xaxis.get_major_ticks():
-            tick.label.set_fontweight('bold')
-        for tick in ax.yaxis.get_major_ticks():
-            tick.label.set_fontweight('bold')
-        ax.tick_params(axis='x', which='both', top=False)
-        ax.tick_params(axis='y', which='both', right=False)
-        for axis in ['top', 'bottom', 'left', 'right']:
-            ax.spines[axis].set_linewidth(2)
-        plt.savefig('%s/%s_target_site.png' % (plot_dir, re.sub(r'[:\-.]{1,2}', '_', motif_name)), dpi=600)
+    for pwm, sites in zip(pwms, motif_sites):
+        logger.debug(f"Plotting for {pwm.name}")
+        distances = []
+        for idx, region in enumerate(regions):
+            for site in sites[idx]:
+                distances.append(site.start + pwm.length / 2 - region.summit)
+        bin_edges = np.arange(-extend - 5, extend + 6, 10)
+        freq, _ = np.histogram(distances, bins=bin_edges)
+        freq = smooth(freq / len(distances))
+        x = []
+        for i in range(len(freq)):
+            x.append((bin_edges[i] + bin_edges[i + 1]) // 2)
+        fig = plt.figure(figsize=(4, 3.5))
+        ax = fig.gca()
+        ax.bar(x, freq, width=10, color='#4169E1', label=pwm.name)
+        ax.legend(loc='upper right', fontsize=8, frameon=False)
+        ax.set_xlabel('Distance to Center/Summit', fontsize=8)
+        ax.set_ylabel('Fraction', fontsize=8)
+        ax.set_xlim(-extend - 5, extend + 5)
+        if len(distances) > 0:
+            ax.set_ylim(0, 1.2 * max(freq))
+        else:
+            ax.set_ylim(0, 0.1)
+        ax.tick_params(axis='both', which='major', labelsize=8)
+        fig.subplots_adjust(left=0.15, right=0.98, bottom=0.15, top=0.95)
+        name = replace_special_char(pwm.name)
+        path = os.path.join(output_dir, f"{name}_sites_distributions.pdf")
+        fig.savefig(path)
         plt.close()
 
-    return
 
+def plot_motif_sites_enrich(output_dir, regions, pwms, motif_sites,
+                            motif_sites_control):
+    if not have_value_attr(regions):
+        logger.error("Unable to plot when some regions have no scores set for "
+                     "sorting")
+        return
+    n_regions_input = len(regions)
+    if len(str(n_regions_input)) < 2:
+        logger.error(
+            f"Too few regions to plot: {n_regions_input}")
+        return
 
-def tarnum_and_tarsite_distribution(peak_table, rand_table, motif_table, plot_out_dir, bin_size=10, region_radius=500):
-    # fold change plot parameter
-    motif_name_list = extract_motif_name_from_peak_result_table(peak_table)
-    npeak = len(peak_table)
-    nrand = len(rand_table)
-    nsamp = round(nrand / npeak)
-    bin = 1000
-    half_bin = bin / 2
-    peak_table.sort_values(by='value', ascending=False, inplace=True)
-    n_motif = len(motif_name_list)
+    output_dir = os.path.join(output_dir, 'plots')
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
 
-    # target site paramater
-    win_size = region_radius * 2
-    half_win_size = win_size / 2
+    # sort regions by score
+    ranked_idx = sorted(range(n_regions_input),
+                        key=lambda x: regions[x].score, reverse=True)
+    flanking_size = n_regions_input // 100
 
-    bin_center = np.arange(-half_win_size, win_size - half_win_size + 1, bin_size)
-    bin_edge = bin_center - round(bin_size / 2)
-    bin_edge = np.append(bin_edge, bin_center[-1] + round(bin_size / 2))
-    bin_edge = map(int, bin_edge)
-    n_motif = len(motif_table)
+    for pwm, sites_input, sites_control in zip(pwms, motif_sites,
+                                               motif_sites_control):
+        logger.debug(f"Plotting for {pwm.name}")
+        n_regions_control = len(sites_control)
+        n_control = sum([len(sites) > 0 for sites in sites_control])
+        ratio_control = n_control / n_regions_control
+        if ratio_control == 0:
+            ratio_control = 1
 
-    cnt = 0
-    for midx, motif_record in motif_table.iterrows():
-        cnt += 1
-        motif_len = np.shape(motif_record['matrix'])[1]
-        motif_name = motif_record['name']
-        # fold change data preparation
-        tarnum_fc_smooth = np.zeros(npeak)
-        tarnum_smooth = np.zeros(npeak)
-        for pi in np.arange(npeak):
-            peak_start_idx = max(0, pi - half_bin)
-            peak_end_idx = min(npeak, pi + half_bin)
-            peak_tarnum = peak_table['%s.number' %
-                                     motif_name].iloc[peak_start_idx:peak_end_idx]
+        sites_input = np.asarray(sites_input)[ranked_idx]
+        fold_changes = []
+        has_site_flag = [len(sites) > 0 for sites in sites_input]
+        for idx in range(n_regions_input):
+            head = max(0, idx - flanking_size)
+            tail = min(idx + flanking_size, n_regions_input)
+            ratio_input = sum(has_site_flag[head:tail]) / (tail - head)
+            fold_changes.append(ratio_input / ratio_control)
+        fold_changes = smooth(fold_changes)
 
-            peak_tarnum_smooth = float(
-                len(peak_tarnum[peak_tarnum > 0])) / len(peak_tarnum)
-            rnd_idx = peak_table.iloc[peak_start_idx:peak_end_idx].index * int(nsamp)
-            rand_tarnum = rand_table['%s.number' %
-                                     motif_name].ix[rnd_idx]
-            rand_tarnum_smooth = float(
-                len(rand_tarnum[rand_tarnum > 0])) / len(rand_tarnum)
-
-            tarnum_smooth[pi] = peak_tarnum_smooth
-            if rand_tarnum_smooth == 0:
-                tarnum_fc_smooth[pi] = peak_tarnum_smooth
-            else:
-                tarnum_fc_smooth[pi] = peak_tarnum_smooth / rand_tarnum_smooth
-
-        tarnum_fc_smooth = pd.Series(tarnum_fc_smooth)
-        tarnum_smooth = pd.Series(tarnum_smooth)
-
-        # target site data preparation
-        motif_tarsite = []
-        for idx, i in enumerate(peak_table['%s.tarsite' % motif_name]):
-            if len(i) > 0:
-                for j in i:
-                    motif_tarsite.append(j + motif_len / 2 - half_win_size)
-        motif_tarsite_freq = np.histogram(motif_tarsite, bin_edge)
-        motif_marker = motif_tarsite_freq[0]
-        motif_marker = motif_marker / float(sum(motif_marker))
-        n_motif_marker = len(motif_marker)
-        motif_marker_long = np.concatenate([motif_marker, motif_marker, motif_marker])
-        motif_marker_long = smooth(motif_marker_long, 20)
-        motif_marker = motif_marker_long[n_motif_marker:(2 * n_motif_marker)]
-
-        # plot
-        plt.cla()
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
-        # fc
-        fig.suptitle(motif_name, weight='black')
-        ax1.bar(np.arange(npeak), tarnum_fc_smooth, 1,
-                color='#4169E1', lw=0, label='fc of %s' % motif_name)
-        xtick_step = _get_highest_digit(npeak / 6) * 10 ** int(math.log10(npeak / 6))
-        ax1.set_xticks(np.arange(0, npeak, xtick_step))
-        ax1.set_xlim(xmin=1, xmax=npeak)
-        ax1.set_ylim(ymin=0, ymax=1.3 * max(tarnum_fc_smooth))
-        for axis in ['top', 'bottom', 'left', 'right']:
-            ax1.spines[axis].set_linewidth(2)
-        ax1.tick_params(axis='x', which='both', top=False)
-        ax1.tick_params(axis='y', which='both', right=False)
-        ax1.set_ylabel('Fold Change', weight='bold')
-        ax1.set_xlabel('Peak Rank (Sorted by Value in Descending Order)', weight='bold')
-        for tick in ax1.xaxis.get_major_ticks():
-            tick.label.set_fontweight('bold')
-        for tick in ax1.yaxis.get_major_ticks():
-            tick.label.set_fontweight('bold')
-
-        # targetsite
-        ax2.bar(bin_edge[:-1], motif_marker, width=bin_size - 1.5,
-                color='#4169E1', linewidth=0, label=motif_name)
-        ax2.set_xlabel('Distance to Peak Summit', weight='bold')
-        ax2.set_ylabel('Fraction', weight='bold')
-        ax2.set_xlim([min(bin_edge), max(bin_edge)])
-        ax2.set_ylim([0, 1.5 * max(motif_marker)])
-        for tick in ax2.xaxis.get_major_ticks():
-            tick.label.set_fontweight('bold')
-        for tick in ax2.yaxis.get_major_ticks():
-            tick.label.set_fontweight('bold')
-        ax2.tick_params(axis='x', which='both', top=False)
-        ax2.tick_params(axis='y', which='both', right=False)
-        for axis in ['top', 'bottom', 'left', 'right']:
-            ax2.spines[axis].set_linewidth(2)
-        fig.savefig('%s/%s_%s_tarsite_fc_dist.png' % (plot_out_dir, cnt, re.sub(r'[:\-.]{1,2}', '_', motif_name)),
-                    dpi=600)
+        fig = plt.figure(figsize=(4, 3.5))
+        ax = fig.gca()
+        ax.bar(range(1, n_regions_input + 1), fold_changes, width=1,
+               color='#4169E1', label=pwm.name)
+        ax.legend(loc='upper right', fontsize=8, frameon=False)
+        ax.set_xlabel('Regions Ranked by Score (Descending)', fontsize=8)
+        ax.set_ylabel('Fold Change', fontsize=8)
+        ax.set_xlim(0, n_regions_input)
+        y_max = max(fold_changes)
+        if y_max > 0:
+            ax.set_ylim(0, 1.2 * y_max)
+        else:
+            ax.set_ylim(0, 0.1)
+        ax.tick_params(axis='both', which='major', labelsize=8)
+        fig.subplots_adjust(left=0.15, right=0.98, bottom=0.15, top=0.95)
+        name = replace_special_char(pwm.name)
+        path = os.path.join(output_dir, f"{name}_sites_enrichment.pdf")
+        fig.savefig(path)
         plt.close()
-    return
