@@ -1,10 +1,15 @@
-# Docs
-include LICENSE
-include CHANGELOG.md
-include README.md
-graft docs
+recursive-include motifscan *.c
 
-# Data
-recursive-include data/example *.txt *.bed
-recursive-include data/gene *.txt
-recursive-include data/motif *.txt
+include MANIFEST.in
+include LICENSE
+include CHANGELOG.rst
+include README.rst
+include tox.ini
+include setup.py
+
+graft docs
+prune docs/build
+graft tests
+
+global-exclude __pycache__
+global-exclude *.pyc

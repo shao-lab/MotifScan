@@ -1,0 +1,16 @@
+[run]
+branch = True
+
+[report]
+show_missing = True
+omit =
+    motifscan/genome/databases.py
+    motifscan/motif/databases.py
+    motifscan/io/*
+    motifscan/plot.py
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+    def __str__
+    def __repr__
+    raise NotImplementedError
