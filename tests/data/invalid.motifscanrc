@@ -1,0 +1,6 @@
+[motifscan]
+genome_dir = /path/to/genomes
+motif_dir = /path/to/motifs
+
+[genome]
+hg19
