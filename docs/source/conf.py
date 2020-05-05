@@ -60,5 +60,5 @@ html_theme = 'sphinx_rtd_theme'
 # html_static_path = ['_static']
 
 linkcheck_ignore = [
-    r"https://github.com/shao-lab/MotifScan/workflows/Python%20package/badge.svg"
+    r"https://github.com/shao-lab/MotfiScan/workflows/Python%20package/badge.svg"
 ]

@@ -3,7 +3,7 @@
 Welcome to MotifScan
 ====================
 
-.. image:: https://github.com/shao-lab/MotfiScan/workflows/Python%20package/badge.svg
+.. image:: https://github.com/shao-lab/MotifScan/workflows/Python%20package/badge.svg
    :alt: Github Actions
    :target: https://github.com/shao-lab/MotifScan/actions
 .. image:: https://readthedocs.org/projects/motifscan/badge/?version=latest
