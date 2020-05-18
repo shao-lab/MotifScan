@@ -55,7 +55,7 @@ def _add_verbose_argument(parser):
 
 
 def configure_parser_main():
-    """Configure the arguments parsers.py for MotifScan."""
+    """Configure the arguments parsers for MotifScan."""
     description = dedent("""
     MotifScan: A motif discovery tool to detect the occurrences of known motifs
     
@@ -103,7 +103,7 @@ def configure_parser_main():
 
 
 def configure_parser_config(subparsers):
-    """Configure the arguments parsers.py for 'config' subcommand."""
+    """Configure the arguments parsers for 'config' subcommand."""
     help_msg = "Configure data paths for MotifScan."
     desc_msg = help_msg + dedent(f"""  
 
@@ -182,7 +182,7 @@ def configure_parser_config(subparsers):
 
 
 def configure_parser_genome(subparsers):
-    """Configure the arguments parsers.py for the 'genome' subcommand."""
+    """Configure the arguments parsers for the 'genome' subcommand."""
     help_msg = "Genome assembly commands."
 
     desc_msg = help_msg + dedent("""
@@ -308,7 +308,7 @@ def _check_args_genome(args):
 
 
 def configure_parser_motif(subparsers):
-    """Configure the arguments parsers.py for the 'motif' subcommand."""
+    """Configure the arguments parsers for the 'motif' subcommand."""
     help_msg = "Motif set (PFMs/PWMs) commands."
     desc_msg = help_msg + dedent("""
     
@@ -449,7 +449,7 @@ def _check_args_motif(args):
 
 
 def configure_parser_scan(subparsers):
-    """Configure the arguments parsers.py for the 'scan' subcommand."""
+    """Configure the arguments parsers for the 'scan' subcommand."""
     help_msg = "Scan input regions to detect motif occurrences."
     desc_msg = help_msg + dedent("""
     
