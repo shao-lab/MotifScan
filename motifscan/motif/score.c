@@ -61,7 +61,8 @@ double **mat_to_carray(PyObject *matrix, int matlen)
 
 void free_carray(double **values)
 {
-    for (int i = 0; i < 4; i++)
+    int i;
+    for (i = 0; i < 4; i++)
     {
         free(values[i]);
     }
