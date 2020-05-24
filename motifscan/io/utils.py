@@ -13,7 +13,7 @@ import zipfile
 
 
 def replace_special_char(name):
-    return re.sub(r'[:\-.]', '_', name)
+    return re.sub('[-:./*]', '_', name)
 
 
 def extract_zip(src, dst):
