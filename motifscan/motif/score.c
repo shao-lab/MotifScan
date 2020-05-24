@@ -1,11 +1,11 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-double **mat_to_carray(PyObject *matrix, int matlen)
+double **mat_to_carray(PyObject *matrix, unsigned int matlen)
 {
-    int i, j;
     Py_ssize_t nrows, ncols;
     PyObject *rowlist, *item;
+    unsigned int i, j;
 
     if (!PyList_Check(matrix))
     {
@@ -61,7 +61,7 @@ double **mat_to_carray(PyObject *matrix, int matlen)
 
 void free_carray(double **values)
 {
-    int i;
+    unsigned int i;
     for (i = 0; i < 4; i++)
     {
         free(values[i]);
@@ -71,19 +71,14 @@ void free_carray(double **values)
 
 static PyObject *motif_score(PyObject *self, PyObject *args)
 {
-    PyObject *matrix, *sequences;
-    int matlen;
-    double scoremax;
-
-    double **values;
-    PyObject *item;
+    PyObject *matrix, *sequences, *sequence, *scores;
+    unsigned int matlen, pos;
+    double **values, score, scoremax;
     Py_ssize_t nseqs, seqidx;
     char *seq;
-    int pos, seqlen;
-    double score;
-    PyObject *scores;
+    size_t seqlen;
 
-    if (!PyArg_ParseTuple(args, "OidO", &matrix, &matlen, &scoremax, &sequences))
+    if (!PyArg_ParseTuple(args, "OIdO", &matrix, &matlen, &scoremax, &sequences))
         return NULL;
 
     values = mat_to_carray(matrix, matlen);
@@ -100,13 +95,13 @@ static PyObject *motif_score(PyObject *self, PyObject *args)
     scores = PyList_New(nseqs);
     for (seqidx = 0; seqidx < nseqs; seqidx++)
     {
-        item = PyList_GetItem(sequences, seqidx);
-        if (!PyUnicode_Check(item))
+        sequence = PyList_GetItem(sequences, seqidx);
+        if (!PyUnicode_Check(sequence))
         {
             PyErr_SetString(PyExc_TypeError, "expect str for sequences");
             return NULL;
         }
-        seq = (char *)PyUnicode_AsUTF8(item);
+        seq = (char *)PyUnicode_AsUTF8(sequence);
         seqlen = strlen(seq);
         if (seqlen < matlen)
         {
@@ -147,19 +142,15 @@ static PyObject *motif_score(PyObject *self, PyObject *args)
 
 static PyObject *sliding_motif_score(PyObject *self, PyObject *args)
 {
-    PyObject *matrix, *sequences;
-    int matlen;
-    double scoremax;
-
-    double **values;
-    PyObject *item;
+    PyObject *matrix, *sequences, *sequence, *sldscore, *sldscores;
+    unsigned int matlen;
+    double **values, scoremax, score;
     Py_ssize_t nseqs, seqidx;
     char *seq;
-    int i, j, pos, seqlen, scorelen;
-    double score;
-    PyObject *sldscore, *sldscores;
+    size_t seqlen, pos, scorelen, i;
+    unsigned int j;
 
-    if (!PyArg_ParseTuple(args, "OidO", &matrix, &matlen, &scoremax, &sequences))
+    if (!PyArg_ParseTuple(args, "OIdO", &matrix, &matlen, &scoremax, &sequences))
         return NULL;
 
     values = mat_to_carray(matrix, matlen);
@@ -176,13 +167,13 @@ static PyObject *sliding_motif_score(PyObject *self, PyObject *args)
     sldscores = PyList_New(nseqs);
     for (seqidx = 0; seqidx < nseqs; seqidx++)
     {
-        item = PyList_GetItem(sequences, seqidx);
-        if (!PyUnicode_Check(item))
+        sequence = PyList_GetItem(sequences, seqidx);
+        if (!PyUnicode_Check(sequence))
         {
             PyErr_SetString(PyExc_TypeError, "expect str for sequences");
             return NULL;
         }
-        seq = (char *)PyUnicode_AsUTF8(item);
+        seq = (char *)PyUnicode_AsUTF8(sequence);
         seqlen = strlen(seq);
         if (seqlen < matlen)
         {
