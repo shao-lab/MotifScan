@@ -1,6 +1,12 @@
 ChangeLog
 =========
 
+v1.2.2 (2020-05-24)
+-------------------
+
+* Replace new special characters '/' and '*' to '_' for motif names
+* Better type definition in score.C
+
 v1.2.1 (2020-05-18)
 -------------------
 

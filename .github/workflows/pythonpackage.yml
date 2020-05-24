@@ -7,7 +7,7 @@ on:
   push:
     branches:
       - master
-      - v1.2.0
+      - v1.*
   pull_request:
     branches:
       - master
