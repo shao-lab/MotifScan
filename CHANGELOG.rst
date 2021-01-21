@@ -1,6 +1,15 @@
 ChangeLog
 =========
 
+v1.3.0 (2021-01-21)
+-------------------
+
+* Use pthread for concurrent scanning (significant speed improvement)
+* Optimize for memory usage
+* Support for multiple rounds sampling to calculate score cutoffs
+* Add matrix id in output files
+* Bug fixes and other performance improvements
+
 v1.2.2 (2020-05-24)
 -------------------
 
