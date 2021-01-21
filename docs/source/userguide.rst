@@ -283,6 +283,9 @@ determined according to the sampling distribution of the motif score.
 By default, the sampling goes for 1,000,000 times and motif score cutoffs for P-value
 1e-2, 1e-3, 1e-4, 1e-5 and 1e-6 are obtained.
 
+Users can also trigger the ``--n-repeat`` option to perform the whole sampling procedure
+described above for multiple times and use the averaged cutoffs as final cutoffs.
+
 Uninstall motifs
 ----------------
 

@@ -20,7 +20,7 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'MotifScan'
-copyright = '2020, Shao Lab'
+copyright = '2021, Shao Lab'
 author = 'Hongduo Sun'
 
 # The full version, including alpha/beta/rc tags
