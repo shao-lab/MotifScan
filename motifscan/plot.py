@@ -60,20 +60,22 @@ def plot_motif_sites_dist(output_dir, regions, pwms, motif_sites,
     extend = window_size // 2
 
     for pwm, sites in zip(pwms, motif_sites):
-        logger.debug(f"Plotting for {pwm.name}")
+        logger.debug(f"Plotting for {pwm.matrix_id + ',' + pwm.name}")
         distances = []
         for idx, region in enumerate(regions):
             for site in sites[idx]:
                 distances.append(site.start + pwm.length / 2 - region.summit)
         bin_edges = np.arange(-extend - 5, extend + 6, 10)
         freq, _ = np.histogram(distances, bins=bin_edges)
-        freq = smooth(freq / len(distances))
+        if len(distances) > 0:
+            freq = smooth(freq / len(distances))
         x = []
         for i in range(len(freq)):
             x.append((bin_edges[i] + bin_edges[i + 1]) // 2)
         fig = plt.figure(figsize=(4, 3.5))
         ax = fig.gca()
-        ax.bar(x, freq, width=10, color='#4169E1', label=pwm.name)
+        ax.bar(x, freq, width=10, color='#4169E1',
+               label=pwm.matrix_id + ',' + pwm.name)
         ax.legend(loc='upper right', fontsize=8, frameon=False)
         ax.set_xlabel('Distance to Center/Summit', fontsize=8)
         ax.set_ylabel('Fraction', fontsize=8)
@@ -84,7 +86,7 @@ def plot_motif_sites_dist(output_dir, regions, pwms, motif_sites,
             ax.set_ylim(0, 0.1)
         ax.tick_params(axis='both', which='major', labelsize=8)
         fig.subplots_adjust(left=0.15, right=0.98, bottom=0.15, top=0.95)
-        name = replace_special_char(pwm.name)
+        name = replace_special_char(pwm.matrix_id + '_' + pwm.name)
         path = os.path.join(output_dir, f"{name}_sites_distributions.pdf")
         fig.savefig(path)
         plt.close()
@@ -113,7 +115,7 @@ def plot_motif_sites_enrich(output_dir, regions, pwms, motif_sites,
 
     for pwm, sites_input, sites_control in zip(pwms, motif_sites,
                                                motif_sites_control):
-        logger.debug(f"Plotting for {pwm.name}")
+        logger.debug(f"Plotting for {pwm.matrix_id + ',' + pwm.name}")
         n_regions_control = len(sites_control)
         n_control = sum([len(sites) > 0 for sites in sites_control])
         ratio_control = n_control / n_regions_control
@@ -133,7 +135,7 @@ def plot_motif_sites_enrich(output_dir, regions, pwms, motif_sites,
         fig = plt.figure(figsize=(4, 3.5))
         ax = fig.gca()
         ax.bar(range(1, n_regions_input + 1), fold_changes, width=1,
-               color='#4169E1', label=pwm.name)
+               color='#4169E1', label=pwm.matrix_id + ',' + pwm.name)
         ax.legend(loc='upper right', fontsize=8, frameon=False)
         ax.set_xlabel('Regions Ranked by Score (Descending)', fontsize=8)
         ax.set_ylabel('Fold Change', fontsize=8)
@@ -145,7 +147,7 @@ def plot_motif_sites_enrich(output_dir, regions, pwms, motif_sites,
             ax.set_ylim(0, 0.1)
         ax.tick_params(axis='both', which='major', labelsize=8)
         fig.subplots_adjust(left=0.15, right=0.98, bottom=0.15, top=0.95)
-        name = replace_special_char(pwm.name)
+        name = replace_special_char(pwm.matrix_id + '_' + pwm.name)
         path = os.path.join(output_dir, f"{name}_sites_enrichment.pdf")
         fig.savefig(path)
         plt.close()

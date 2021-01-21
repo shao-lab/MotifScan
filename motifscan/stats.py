@@ -39,6 +39,7 @@ def motif_enrichment(pwms, motif_sites, motif_sites_control):
         odds_ratio, p_depleted = stats.fisher_exact(table, 'less')
         p_corrected = min(min(p_enriched, p_depleted) * n_motifs, 1)
         enrichment_results.append(
-            EnrichmentResult(pwm.name, n_input, n_control, fold_change,
-                             p_enriched, p_depleted, p_corrected))
+            EnrichmentResult(pwm.matrix_id + ',' + pwm.name, n_input,
+                             n_control, fold_change, p_enriched, p_depleted,
+                             p_corrected))
     return enrichment_results

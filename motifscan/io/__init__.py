@@ -16,7 +16,8 @@ def write_sites_table(output_dir, pwms, regions, motif_sites):
     path_num = os.path.join(output_dir, 'motif_sites_number.xls')
     path_score = os.path.join(output_dir, 'motif_sites_score.xls')
     with open(path_num, 'w') as f_num, open(path_score, 'w') as f_score:
-        name_fields = '\t'.join([pwm.name for pwm in pwms])
+        name_fields = '\t'.join(
+            [pwm.matrix_id + ',' + pwm.name for pwm in pwms])
         f_num.write(f"chr\tstart\tend\t{name_fields}\n")
         f_score.write(f"chr\tstart\tend\t{name_fields}\n")
         for idx, region in enumerate(regions):
@@ -43,7 +44,7 @@ def write_sites_bed(output_dir, pwms, regions, motif_sites):
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
     for pwm, sites in zip(pwms, motif_sites):
-        name = replace_special_char(pwm.name)
+        name = replace_special_char(pwm.matrix_id + '_' + pwm.name)
         path = os.path.join(output_dir, f"{name}_sites.bed")
         with open(path, 'w') as f_out:
             for idx, region in enumerate(regions):
