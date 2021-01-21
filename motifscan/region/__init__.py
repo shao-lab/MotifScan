@@ -62,9 +62,8 @@ class GenomicRegion:
         else:
             self.summit = (self.start + self.end) // 2
         if not self.start <= self.summit < self.end:
-            raise ValueError(
-                f"expect start <= summit < end, got start={start} "
-                f"summit={summit} end={end}")
+            logger.warning(f"expect start <= summit < end, got chrom={chrom} "
+                           f"start={start} summit={summit} end={end}")
         self.score = score
 
     def __repr__(self):
