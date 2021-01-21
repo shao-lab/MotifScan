@@ -6,7 +6,6 @@ from motifscan.cli.main import configure_parser_main
 from motifscan.cli.motif import run
 from motifscan.config import Config
 
-# from motifscan.motif import
 
 parser = configure_parser_main()
 

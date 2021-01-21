@@ -7,11 +7,11 @@ from motifscan.motif.matrix import PositionWeightMatrix
 def test_stats_motif_enrichment():
     # n_motifs = 2, n_total_input = 3, n_total_control = 5
     pwm1 = PositionWeightMatrix(values=[[1, 0], [0, 0], [0, 1], [1, 1]],
-                                name='pwm1')
+                                name='pwm1', matrix_id='id_1')
     pwm2 = PositionWeightMatrix(values=[[1, 0], [0, 0], [0, 1], [1, 1]],
-                                name='pwm2')
+                                name='pwm2', matrix_id='id_2')
     pwm3 = PositionWeightMatrix(values=[[1, 0], [0, 0], [0, 1], [1, 1]],
-                                name='pwm3')
+                                name='pwm3', matrix_id='id_3')
     pwms = [pwm1, pwm2, pwm3]
     motif_sites = [[[True], [True, True], []],
                    [[], [], []],

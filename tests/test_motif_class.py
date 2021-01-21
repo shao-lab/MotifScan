@@ -8,6 +8,7 @@ from motifscan.motif import MotifPfms, MotifPwms, load_installed_pfms, \
     load_built_pwms
 from motifscan.motif.matrix import PositionFrequencyMatrix, \
     PositionWeightMatrix
+from motifscan.motif import get_score_cutoffs
 
 
 def test_pfms_init(motif_root):
@@ -104,20 +105,18 @@ def test_pwms_write_motifscan_pwms(tmp_dir):
     assert os.path.isfile(pwms_path)
 
 
-def test_set_cutoffs():
-    pwm = PositionWeightMatrix([[1], [2], [3], [4]])
-    name = 'motif_set'
-    pwms = MotifPwms(pwms=[pwm], name=name)
-    pwms.set_cutoffs([range(1, 1000001)])
-    assert len(pwm.cutoffs) == 5
-    assert pwm.cutoffs['1e-2'] == 990000
-    assert pwm.cutoffs['1e-3'] == 999000
-    assert pwm.cutoffs['1e-4'] == 999900
-    assert pwm.cutoffs['1e-5'] == 999990
-    assert pwm.cutoffs['1e-6'] == 999999
+def test_get_score_cutoffs():
+    cutoffs = get_score_cutoffs([list(range(0, 1000000))])
+    assert len(cutoffs) == 1
+    assert len(cutoffs[0]) == 5
+    assert cutoffs[0]['1e-2'] == 990000
+    assert cutoffs[0]['1e-3'] == 999000
+    assert cutoffs[0]['1e-4'] == 999900
+    assert cutoffs[0]['1e-5'] == 999990
+    assert cutoffs[0]['1e-6'] == 999999
     with pytest.raises(ValueError):
-        pwms.set_cutoffs([[1], [2]])
+        get_score_cutoffs([[1], [2]])
+    with pytest.raises(TypeError):
+        get_score_cutoffs([1, 2, 3])
     with pytest.raises(ValueError):
-        pwms.set_cutoffs([1, 2, 3])
-    with pytest.raises(ValueError):
-        pwms.set_cutoffs([[1, 2, 3]])
+        get_score_cutoffs([[1, 2, 3]])

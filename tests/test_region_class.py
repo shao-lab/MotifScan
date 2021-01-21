@@ -12,7 +12,3 @@ def test_region_init():
         GenomicRegion(chrom='chr1', start=1, end=1)
     with pytest.raises(ValueError):
         GenomicRegion(chrom='chr1', start=2, end=1)
-    with pytest.raises(ValueError):
-        GenomicRegion(chrom='chr1', start=1, end=100, summit=0)
-    with pytest.raises(ValueError):
-        GenomicRegion(chrom='chr1', start=1, end=100, summit=100)
