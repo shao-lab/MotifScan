@@ -51,7 +51,9 @@ classifiers = [
 ]
 
 ext_modules = [
-    Extension("motifscan.motif.score", ["motifscan/motif/score.c"])]
+    Extension("motifscan.motif.cscore", ["motifscan/motif/cscore.c"],
+              extra_compile_args=["-std=c99"])
+]
 
 setup(
     name="motifscan",
