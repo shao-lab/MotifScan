@@ -134,11 +134,10 @@ class Genome:
         """
         return self.fa.fetch(chrom, start, end)
 
-    def random_sequences(self, n_times, length, random_seed=None):
+    def random_sequences(self, n_times, length, max_n=0, random_seed=None):
         """Random sampling sequences from whole genome. The weight for each
-        chromosome to be selected equals to the proportion of its chrom size.
-        If the fraction of 'N' bases >= 0.3 in a random sampled sequence,
-        the sequence will be discarded and re-sampled.
+        chromosome to be selected equals to the proportion of its chromosome
+        size.
 
         Parameters
         ----------
@@ -146,6 +145,9 @@ class Genome:
             Sampling times.
         length: int
             The length of sequences to generate.
+        max_n: int, optional
+            The maximal number of `N` base allowed in a sampled sequence,
+            default=0.
         random_seed: int, optional
             random_seed: The seed used to set random state.
 
@@ -162,14 +164,13 @@ class Genome:
                         self.chroms]
         random_chroms = np.random.choice(self.chroms, size=n_times,
                                          p=chrom_weight)
-        max_n = 0.3 * length
         n_seq = 0
         n_loop = 0
         while n_seq < n_times:
             chrom = random_chroms[n_loop % n_times]
             start = np.random.randint(self.chrom_sizes[chrom] - length)
             seq = self.fetch_sequence(chrom, start, start + length)
-            if seq.count('N') + seq.count('n') < max_n:
+            if seq.count('N') + seq.count('n') <= max_n:
                 yield seq
                 n_seq += 1
             n_loop += 1
