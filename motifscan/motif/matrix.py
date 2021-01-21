@@ -193,6 +193,12 @@ class PositionWeightMatrix(PositionMatrix):
         self._min_raw_score = None
         self.cutoffs = cutoffs
 
+    def set_cutoff(self, p_value, cutoff):
+        """Set motif score cutoff under certain p value."""
+        if self.cutoffs is None:
+            self.cutoffs = {}
+        self.cutoffs[p_value] = cutoff
+
     @property
     def max_raw_score(self):
         """Calculate the possible maximum raw score for the PWM."""

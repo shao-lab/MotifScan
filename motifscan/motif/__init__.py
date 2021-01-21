@@ -9,8 +9,6 @@ import logging
 import os
 import re
 
-import numpy as np
-
 from motifscan.config import Config
 from motifscan.exceptions import PfmsFileNotFoundError, \
     PwmsFileNotFoundError, PfmsJasparFormatError, PwmsMotifScanFormatError
@@ -320,36 +318,6 @@ class MotifPwms(MotifMatrices):
         self.extend(pwms)
         logger.debug(f"Found {len(pwms)} MotifScan PWMs")
 
-    def set_cutoffs(self, sampling_scores):
-        """Set motif score cutoffs given the sampling distributions.
-
-        Parameters
-        ----------
-        sampling_scores : array_like
-            The sampling scores of motifs in a shape of (n_motifs, n_sampling).
-        """
-        logger.debug(f"Setting motif score cutoffs for PWMs {self.name!r}")
-        sampling_scores = np.asarray(sampling_scores)
-        if sampling_scores.ndim != 2:
-            raise ValueError("sampling scores should have 2 dimensions")
-        if len(self) != sampling_scores.shape[0]:
-            raise ValueError(
-                f"sampling scores are expected to have {len(self)} row(s), "
-                f"but got: {sampling_scores.shape[0]} row(s)")
-        if sampling_scores.shape[1] < 100:
-            raise ValueError(
-                "each motif must have at least 100 sampling scores")
-
-        n_bits = min(len(str(sampling_scores.shape[1])), 7)
-        for idx, pwm in enumerate(self):
-            scores = sampling_scores[idx]
-            cutoffs = {}
-            for exponent in range(2, n_bits):
-                cutoff = np.quantile(scores, 1 - 0.1 ** exponent,
-                                     interpolation='lower')
-                cutoffs[f'1e-{exponent}'] = cutoff
-            pwm.cutoffs = cutoffs
-
 
 def load_installed_pfms(name):
     """Load a pre-installed motif PFMs set.
@@ -405,3 +373,29 @@ def load_built_pwms(name, genome):
     else:
         raise PwmsFileNotFoundError(name, genome)
     return pwms
+
+
+def get_score_cutoffs(sampling_scores):
+    """Get motif score cutoffs given the motif score background distributions.
+
+    Parameters
+    ----------
+    sampling_scores : array_like
+        The sampling scores of motifs in a shape of (n_motifs, n_sampling).
+    """
+    pwms_cutoffs = []
+    n_pwms = len(sampling_scores)
+    for i, scores in enumerate(sampling_scores):
+        if len(scores) < 100:
+            raise ValueError(
+                "each motif must have at least 100 sampling scores")
+        logger.debug(f"Getting cutoff: {i + 1}/{n_pwms}")
+        pwm_cutoffs = {}
+        n_scores = len(scores)
+        n_bits = min(len(str(n_scores)), 7)
+        scores.sort(reverse=True)
+        for exponent in range(2, n_bits):
+            cutoff = scores[int(n_scores * 0.1 ** exponent) - 1]
+            pwm_cutoffs[f'1e-{exponent}'] = cutoff
+        pwms_cutoffs.append(pwm_cutoffs)
+    return pwms_cutoffs

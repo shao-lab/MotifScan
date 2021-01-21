@@ -413,8 +413,21 @@ def configure_parser_motif(subparsers):
         help="Generate N random background sequences to calculate motif score "
              "cutoffs. Default: 1,000,000")
     parser_build.add_argument(
+        "--n-repeat", metavar="N", dest="n_repeat", type=_pos_int, default=1,
+        help="Repeat N rounds of random sampling and use the averaged cutoff "
+             "as final cutoff. Default: 1")
+    parser_build.add_argument(
+        "--max-n", metavar="N", dest="max_n", type=int, default=0,
+        help="The maximal number of `N` base allowed in each random sampled "
+             "sequence. Default: 0")
+    parser_build.add_argument(
         "--seed", metavar="SEED", dest="seed", type=int, default=None,
         help="Random seed used to generate background sequences.")
+
+    parser_threads = parser.add_argument_group("Threads Options")
+    parser_threads.add_argument(
+        "-t", "--threads", metavar="N", dest="n_threads", type=int, default=1,
+        help="Number of processes used to run in parallel.")
 
     parser = _add_verbose_argument(parser)
     parser.set_defaults(func=motif.run)

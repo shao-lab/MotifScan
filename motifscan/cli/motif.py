@@ -9,15 +9,19 @@ import logging
 import os
 import shutil
 import sys
+from collections import defaultdict
+
+import numpy as np
 
 from motifscan.config import Config
 from motifscan.exceptions import RemoteMotifPFMsNotFoundError, \
     MotifSetNotFoundError
 from motifscan.genome import Genome
 from motifscan.io.utils import merge_files
-from motifscan.motif import pfms_path_fmt, MotifPwms, load_installed_pfms
+from motifscan.motif import pfms_path_fmt, MotifPwms, load_installed_pfms, \
+    get_score_cutoffs
 from motifscan.motif.databases import JasparDatabase
-from motifscan.motif.score import motif_score
+from motifscan.motif.cscore import c_score
 
 logger = logging.getLogger(__name__)
 
@@ -112,19 +116,41 @@ def build_motif(args, config_file=None):
         pwm = pfm.to_ppm().to_pwm(genome.bg_freq)
         pwms.append(pwm)
 
-    logger.info("Random sampling sequences")
-    random_sequences = list(genome.random_sequences(args.n_random, max_length,
-                                                    args.seed))
-    logger.info("Scanning motifs on the sampled sequences")
-    sampling_scores = []
-    for idx, pwm in enumerate(pwms):
-        logger.info(f"Scanning {pwm.name} [{idx + 1}/{len(pwms)}]")
-        matrix = pwm.matrix.tolist()
-        scores = motif_score(matrix, pwm.length, pwm.max_raw_score,
-                             random_sequences)
-        sampling_scores.append(scores)
-    logger.info("Setting motif score cutoffs")
-    pwms.set_cutoffs(sampling_scores)
+    cutoffs_all = []
+    for i in range(args.n_repeat):
+        if args.n_repeat > 1:
+            logger.info(
+                f"Building motif score cutoffs: {i + 1} of {args.n_repeat}")
+        if args.seed is not None:
+            seed = args.seed + i
+        else:
+            seed = None
+        logger.info("Random sampling background sequences")
+        seqs = list(genome.random_sequences(args.n_random, max_length,
+                                            args.max_n, seed))
+
+        logger.info("Calculating background motif scores")
+        matrices = [pwm.matrix.tolist() for pwm in pwms]
+        sampling_scores = c_score(matrices, seqs, 3, args.n_threads)
+
+        logger.info("Getting motif score cutoffs")
+        cutoffs_all.append(get_score_cutoffs(sampling_scores))
+
+    if args.n_repeat > 1:
+        logger.info("Saving averaged motif score cutoffs")
+    else:
+        logger.info("Saving motif score cutoffs")
+
+    for i, pwm in enumerate(pwms):
+        cutoffs = defaultdict(list)
+        for pwms_cutoffs in cutoffs_all:
+            pwm_cutoffs = pwms_cutoffs[i]
+            for p_value, cutoff in pwm_cutoffs.items():
+                cutoffs[p_value].append(cutoff)
+        for p_value in cutoffs:
+            cutoff = np.mean(cutoffs[p_value])
+            cutoff = np.around(cutoff, 8)
+            pwm.set_cutoff(p_value=p_value, cutoff=cutoff)
     pwms.save_built_pwms()
     logger.info("Successfully built!")
 
