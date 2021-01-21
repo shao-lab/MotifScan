@@ -123,6 +123,8 @@ def generate_control_regions(n_random, regions, chrom_size, genes=None,
                                   end=start + length))
         else:
             genes_chrom = genes.fetch(region.chrom)
+            if not genes_chrom:
+                continue
             distance = dis_to_nearest_gene(region, genes_chrom)
             n_generated = 0
             while n_generated < n_random:
